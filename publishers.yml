@@ -1,0 +1,7 @@
+guardian:
+    url: https://www.theguardian.com/uk
+    selector: '.fc-item__container'
+
+bbc:
+    url: http://www.bbc.co.uk/news
+    selector: '[data-entityid]'

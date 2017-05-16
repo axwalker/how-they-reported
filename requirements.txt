@@ -1,0 +1,4 @@
+Pillow==4.1.1
+PyYAML==3.12
+selenium==3.4.1
+typing==3.6.1
