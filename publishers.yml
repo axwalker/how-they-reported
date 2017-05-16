@@ -5,3 +5,11 @@ guardian:
 bbc:
     url: http://www.bbc.co.uk/news
     selector: '[data-entityid]'
+
+telegraph:
+    url: http://www.telegraph.co.uk/
+    selector: '.list-of-entities__item'
+
+independent:
+    url: http://www.independent.co.uk/
+    selector: "[class*='story']"

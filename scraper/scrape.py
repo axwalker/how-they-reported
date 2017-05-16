@@ -1,22 +1,27 @@
 import io
+import time
 from typing import List
 
+from newspaper import Article
 from PIL import Image
-from selenium.webdriver.remote.webelement import WebElement
 from selenium import webdriver
+from selenium.webdriver.remote.webelement import WebElement
 
 from scraper import publisher
 
 
-def get_story_teaser(story: str, pub: publisher.Publisher):
+def get_story_teaser(article: Article, pub: publisher.Publisher):
     browser = webdriver.PhantomJS()
 
     browser.set_window_size(1920, 1080)
     browser.get(pub.url)
+
+    time.sleep(3)
     browser.execute_script('return document.body.scrollHeight;')
+    time.sleep(3)
 
     candidates = browser.find_elements_by_css_selector(pub.selector)
-    teaser_element = _best_candidate(story, candidates)
+    teaser_element = _best_candidate(article, candidates)
 
     if not teaser_element:
         return None
@@ -25,16 +30,16 @@ def get_story_teaser(story: str, pub: publisher.Publisher):
     return _crop_img_to_element(img_data, teaser_element)
 
 
-def _best_candidate(story: str, elements: List[WebElement]):
+def _best_candidate(article: Article, elements: List[WebElement]):
     scores = {}
-    tokens = story.split()
     for e in elements:
-        html = e.get_attribute('innerHTML').lower()
-        scores[e] = sum(1 for t in tokens if t in html)
+        text = e.text.lower()
+        score = sum(1 for t in article.keywords if t in text)
+        scores[e] = score
     best = max(scores, key=(lambda k: scores[k]))
     scores = {e: s for e, s in scores.items() if s == scores[best]}
     best = max(scores, key=(lambda e: _element_area(e)))
-    return best if scores[best] >= len(tokens) / 2 else None
+    return best if scores[best] >= 2 else None
 
 
 def _element_area(element: WebElement):
@@ -56,10 +61,14 @@ def _crop_img_to_element(img_data: bytes, element: WebElement):
 
 def example():
     publishers = publisher.all_publishers()
+    article = Article('https://t.co/eKrRfHuq0a')
+    article.download()
+    article.parse()
+    article.nlp()
     for pub in publishers:
-        story = 'election manifesto pledges almost labour fully new top rate tax'
-        teaser = get_story_teaser(story, pub)
-        teaser.show()
+        teaser = get_story_teaser(article, pub)
+        if teaser:
+            teaser.show()
 
 if __name__ == '__main__':
     example()
