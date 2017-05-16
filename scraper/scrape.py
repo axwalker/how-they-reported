@@ -22,8 +22,7 @@ def get_story_teaser(story: str, pub: publisher.Publisher):
         return None
 
     img_data = browser.get_screenshot_as_png()
-    teaser = _crop_img_to_element(img_data, teaser_element)
-    teaser.show()
+    return _crop_img_to_element(img_data, teaser_element)
 
 
 def _best_candidate(story: str, elements: List[WebElement]):
@@ -50,15 +49,17 @@ def _crop_img_to_element(img_data: bytes, element: WebElement):
     top = location['y']
     right = left + size['width']
     bottom = top + size['height']
-
-    image = Image.open(io.BytesIO(img_data))
-    return image.crop((left, top, right, bottom))
+    return (Image
+            .open(io.BytesIO(img_data))
+            .crop((left, top, right, bottom)))
 
 
 def example():
     publishers = publisher.all_publishers()
     for pub in publishers:
-        get_story_teaser('election manifesto pledges almost labour fully new top rate tax', pub)
+        story = 'election manifesto pledges almost labour fully new top rate tax'
+        teaser = get_story_teaser(story, pub)
+        teaser.show()
 
 if __name__ == '__main__':
     example()
