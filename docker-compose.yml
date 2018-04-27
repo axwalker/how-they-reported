@@ -1,0 +1,7 @@
+version: '3'
+services:
+  wtps:
+    build: .
+    volumes:
+      - ./:/usr/app/
+    command: python wtps.py

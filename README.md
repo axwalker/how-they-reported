@@ -1,3 +1,10 @@
+# Run example
+
+`docker-compose up wtps`
+
+An image file for each publisher will be created. You can change the article in wtps.py.
+
+
 # Challenges
 
 - determining when there is a 'breaking story', perhaps from some breaking news twitter feed?
@@ -8,7 +15,7 @@
 # Todo
 
 - add more publishers
-- run on AWS (probably EB for easy deployment)
+- run on Heroku
 - create twitter account
 - collate results for each story into at most 4 images
 - publish tweet on schedule or trigger

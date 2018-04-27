@@ -1,15 +1,17 @@
 guardian:
     url: https://www.theguardian.com/uk
     selector: '.fc-item__container'
+    remove:
+      - '.site-message'
 
-bbc:
-    url: http://www.bbc.co.uk/news
-    selector: '[data-entityid]'
+# bbc:
+#     url: http://www.bbc.co.uk/news
+#     selector: '[data-entityid]'
 
-telegraph:
-    url: http://www.telegraph.co.uk/
-    selector: '.list-of-entities__item'
+# telegraph:
+#     url: http://www.telegraph.co.uk/
+#     selector: '.list-of-entities__item'
 
-independent:
-    url: http://www.independent.co.uk/
-    selector: "[class*='story']"
+# independent:
+#     url: http://www.independent.co.uk/
+#     selector: "[class*='story']"
