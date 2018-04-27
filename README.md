@@ -1,6 +1,6 @@
 # Run example
 
-`docker-compose up wtps`
+`docker-compose up`
 
 An image file for each publisher will be created. You can change the article in wtps.py.
 

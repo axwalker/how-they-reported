@@ -17,6 +17,7 @@ def all_publishers():
     with open("publishers.yml") as f:
         publishers = yaml.load(f)
     for name, pub in publishers.items():
+        pub["remove"] = pub.get("remove", [])
         yield Publisher(name=name, **pub)
 
 
@@ -40,6 +41,7 @@ class PublisherScraper:
 
     def get_teaser_for(self, *, article: Article, publisher: Publisher):
         self.browser.get(publisher.url)
+        time.sleep(5)
         self._remove_obstructions(publisher.remove)
         teaser = self._get_teaser(article, publisher)
         return teaser
