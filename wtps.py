@@ -1,8 +1,6 @@
 from collections import namedtuple
 import io
 import os
-import re
-import time
 from typing import List
 
 from newspaper import Article
