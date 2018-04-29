@@ -7,3 +7,13 @@ guardian:
 bbc:
     url: http://www.bbc.co.uk/news
     selector: '[data-entityid]'
+
+telegraph:
+    url: https://www.telegraph.co.uk/
+    selector: '.list-of-entities__item'
+
+times:
+    url: https://www.thetimes.co.uk/
+    selector: '.Item'
+    remove:
+      - '.CookieMessage-container'

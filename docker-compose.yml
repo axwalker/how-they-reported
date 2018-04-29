@@ -2,6 +2,7 @@ version: '3'
 services:
   wtps:
     build: .
+    image: wtps
     env_file: .env
     volumes:
       - ./:/usr/app/

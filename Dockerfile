@@ -1,4 +1,4 @@
-FROM joyzoursky/python-chromedriver:3.6
+FROM jaimelopesflores/python3-firefox-headless
 
 WORKDIR /usr/app
 

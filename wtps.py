@@ -7,8 +7,10 @@ from typing import List
 
 from newspaper import Article
 from PIL import Image
+from pyvirtualdisplay import Display
 import selenium
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.remote.webelement import WebElement
 import twitter
 import yaml
@@ -36,23 +38,23 @@ def get_article(url: str):
 class PublisherScraper:
 
     def __init__(self):
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--disable-gpu")
-        self.browser = webdriver.Chrome(chrome_options=chrome_options)
-        self.browser.set_window_size(1920, 1080)
+        self.display = Display(visible=0, size=(1920, 1080))
+        self.display.start()
+        options = Options()
+        options.set_headless(headless=True)
+        self.browser = webdriver.Firefox(firefox_options=options)
 
     def get_teaser_for(self, *, article: Article, publisher: Publisher):
         try:
             self.browser.get(publisher.url)
             self._remove_obstructions(publisher.remove)
             teaser = self._get_teaser(article, publisher)
-        except selenium.common.exceptions.WebDriverException:
+        except:
             teaser = None
             print(f"Failed for {publisher.name}")
         finally:
             self.browser.quit()
+            self.display.stop()
         return teaser
 
     def _remove_obstructions(self, selectors: List[WebElement]):
@@ -84,12 +86,8 @@ class TeaserFinder:
         if not teaser_element:
             return None
 
-        # Ensure whole element is in viewport
-        height = teaser_element.location["y"] + teaser_element.size["height"]
-        self.browser.set_window_size(1920, height)
-
-        img_data = self.browser.get_screenshot_as_png()
-        image = self._crop_img_to_element(img_data, teaser_element)
+        img_data = teaser_element.screenshot_as_png
+        image = Image.open(io.BytesIO(img_data))
         return image
 
     def _find_best_candidate(self, keywords: List[str], elements: List[WebElement]):
@@ -103,15 +101,6 @@ class TeaserFinder:
         best = max(scores, key=(lambda e: e.size["width"] * e.size["height"]))
         best = best if scores[best] >= 2 else None
         return best
-
-    def _crop_img_to_element(self, img_data: bytes, el: WebElement):
-        left = el.location["x"]
-        top = el.location["y"]
-        right = left + el.size["width"]
-        bottom = top + el.size["height"]
-        image = Image.open(io.BytesIO(img_data))
-        image = image.crop((left, top, right, bottom))
-        return image
 
 
 Breaking = namedtuple("Breaking", ("text", "url"))
@@ -141,7 +130,6 @@ class Twitter:
 
 def get_teasers(breaking: Breaking):
     publishers = all_publishers()
-    print(breaking.url)
     article = get_article(breaking.url)
     teasers = []
     for pub in publishers:
