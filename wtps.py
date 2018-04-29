@@ -54,7 +54,6 @@ class PublisherScraper:
             print(f"Failed for {publisher.name}")
         finally:
             self.browser.quit()
-            self.display.stop()
         return teaser
 
     def _remove_obstructions(self, selectors: List[WebElement]):
