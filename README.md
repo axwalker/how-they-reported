@@ -1,8 +1,7 @@
-# Run example
+# Run for latest BBC breaking news story
 
 `docker-compose up`
 
-An image file for each publisher will be created. You can change the article in wtps.py.
 
 ### Format code
 

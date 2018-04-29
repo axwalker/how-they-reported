@@ -1,12 +1,16 @@
 from collections import namedtuple
 import io
+import os
+import re
 import time
 from typing import List
 
 from newspaper import Article
 from PIL import Image
+import selenium
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
+import twitter
 import yaml
 
 
@@ -40,10 +44,15 @@ class PublisherScraper:
         self.browser.set_window_size(1920, 1080)
 
     def get_teaser_for(self, *, article: Article, publisher: Publisher):
-        self.browser.get(publisher.url)
-        time.sleep(5)
-        self._remove_obstructions(publisher.remove)
-        teaser = self._get_teaser(article, publisher)
+        try:
+            self.browser.get(publisher.url)
+            self._remove_obstructions(publisher.remove)
+            teaser = self._get_teaser(article, publisher)
+        except selenium.common.exceptions.WebDriverException:
+            teaser = None
+            print(f"Failed for {publisher.name}")
+        finally:
+            self.browser.quit()
         return teaser
 
     def _remove_obstructions(self, selectors: List[WebElement]):
@@ -105,15 +114,53 @@ class TeaserFinder:
         return image
 
 
-def example():
+Breaking = namedtuple("Breaking", ("text", "url"))
+
+
+class Twitter:
+
+    def __init__(self):
+        self.api = twitter.Api(
+            consumer_key=os.getenv("CONSUMER_KEY"),
+            consumer_secret=os.getenv("CONSUMER_SECRET"),
+            access_token_key=os.getenv("ACCESS_TOKEN"),
+            access_token_secret=os.getenv("ACCESS_TOKEN_SECRET"),
+        )
+
+    def get_breaking_news(self):
+        timeline = self.api.GetUserTimeline(screen_name="BBCBreaking")
+        latest = timeline[0].text
+        latest_url = latest.split(" ")[-1]
+        text = latest.replace(latest_url, "").strip()
+        breaking = Breaking(text, latest_url)
+        return [breaking]
+
+    def post_teasers(self, text: str, teasers: List[str]):
+        self.api.PostUpdate(text, media=teasers)
+
+
+def get_teasers(breaking: Breaking):
     publishers = all_publishers()
-    article = get_article("http://www.bbc.co.uk/news/world-asia-43921385")
+    print(breaking.url)
+    article = get_article(breaking.url)
+    teasers = []
     for pub in publishers:
         scraper = PublisherScraper()
         teaser = scraper.get_teaser_for(article=article, publisher=pub)
         if teaser:
-            teaser.save(f"{pub.name}.png")
+            fname = f"{pub.name}.png"
+            teaser.save(fname)
+            yield fname
+
+
+def main():
+    tweet = Twitter()
+    breaking_news = tweet.get_breaking_news()
+    for breaking in breaking_news:
+        teasers = list(get_teasers(breaking))
+        if teasers:
+            tweet.post_teasers(breaking.text, teasers)
 
 
 if __name__ == "__main__":
-    example()
+    main()

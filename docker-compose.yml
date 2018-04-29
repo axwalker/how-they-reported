@@ -2,6 +2,7 @@ version: '3'
 services:
   wtps:
     build: .
+    env_file: .env
     volumes:
       - ./:/usr/app/
     command: python wtps.py
