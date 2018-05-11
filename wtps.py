@@ -4,7 +4,7 @@ import os
 from typing import List
 
 from newspaper import Article
-from PIL import Image
+from PIL import Image, ImageOps
 from pyvirtualdisplay import Display
 import selenium
 from selenium import webdriver
@@ -13,8 +13,10 @@ from selenium.webdriver.remote.webelement import WebElement
 import twitter
 import yaml
 
+import packer
 
-Publisher = namedtuple("Publisher", ("name", "url", "selector", "remove"))
+
+Publisher = namedtuple("Publisher", ("name", "url", "logo", "selector", "remove"))
 
 
 def all_publishers():
@@ -100,6 +102,58 @@ class TeaserFinder:
         return best
 
 
+class Collage:
+
+    def __init__(self, teasers):
+        self.teasers = teasers
+        self.fname = "collage.png"
+        self._format_with_logos()
+        self._make_collage()
+
+    def _format_with_logos(self):
+        for pub, teaser in self.teasers:
+            logo = Image.open(pub.logo)
+            logo_width, logo_height = 200, 75
+            logo.thumbnail((logo_width, logo_height), Image.ANTIALIAS)
+            logo_width, logo_height = logo.size
+
+            padding = 25
+
+            teaser_img = Image.open(teaser)
+            teaser_width, teaser_height = teaser_img.size
+            logo_padding = 10
+
+            width = max(teaser_width, logo_width) + 2 * padding
+            height = teaser_height + logo_height + logo_padding + 2 * padding
+            base = Image.new("RGBA", (width, height), (255, 255, 255))
+
+            logo_left = (width - logo_width) // 2
+            teaser_left = (width - teaser_width) // 2
+            teaser_top = logo_height + logo_padding + padding
+
+            base.paste(logo, (logo_left, padding))
+            base.paste(teaser_img, (teaser_left, teaser_top))
+
+            base = ImageOps.expand(base, border=1, fill="black")
+            base = ImageOps.expand(base, border=10, fill="white")
+            base.save(teaser + ".logo.png")
+
+    def _make_collage(self):
+        images = [
+            (teaser, Image.open(teaser + ".logo.png"))
+            for pub, teaser in self.teasers
+        ]
+        packer.make_collage(images, self.fname)
+        collage = Image.open(self.fname)
+        width, height = collage.size
+
+        # add white background
+        collage.load()
+        background = Image.new("RGB", collage.size, (255, 255, 255))
+        background.paste(collage, mask=collage.split()[3]) # 3 is the alpha channel
+        background.save(self.fname)
+
+
 Breaking = namedtuple("Breaking", ("text", "url"))
 
 
@@ -121,7 +175,7 @@ class Twitter:
         breaking = Breaking(text, latest_url)
         return [breaking]
 
-    def post_teasers(self, text: str, teasers: List[str]):
+    def post_teasers(self, text: str, teasers):
         self.api.PostUpdate(text, media=teasers)
 
 
@@ -131,11 +185,15 @@ def get_teasers(breaking: Breaking):
     teasers = []
     for pub in publishers:
         scraper = PublisherScraper()
-        teaser = scraper.get_teaser_for(article=article, publisher=pub)
+        try:
+            teaser = scraper.get_teaser_for(article=article, publisher=pub)
+        except:
+            print(f"Failed for {pub.name}")
+            continue
         if teaser:
             fname = f"{pub.name}.png"
             teaser.save(fname)
-            yield fname
+            yield pub, fname
 
 
 def main():
@@ -143,8 +201,9 @@ def main():
     breaking_news = tweet.get_breaking_news()
     for breaking in breaking_news:
         teasers = list(get_teasers(breaking))
-        if teasers:
-            tweet.post_teasers(breaking.text, teasers)
+        if len(teasers) > 1:
+            collage = Collage(teasers)
+            tweet.post_teasers(breaking.text, collage.fname)
 
 
 if __name__ == "__main__":

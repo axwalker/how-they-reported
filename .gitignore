@@ -1,5 +1,7 @@
 .vscode
 *.pyc
 *.log
-*.png
 .env
+
+*.png
+!logos/*.png

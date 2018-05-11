@@ -1,19 +1,23 @@
 guardian:
     url: https://www.theguardian.com/uk
+    logo: logos/guardian.png
     selector: '.fc-item__container'
     remove:
       - '.site-message'
 
 bbc:
     url: http://www.bbc.co.uk/news
+    logo: logos/bbc.png
     selector: '[data-entityid]'
 
 telegraph:
     url: https://www.telegraph.co.uk/
+    logo: logos/telegraph.png
     selector: '.list-of-entities__item'
 
 times:
     url: https://www.thetimes.co.uk/
+    logo: logos/times.png
     selector: '.Item'
     remove:
       - '.CookieMessage-container'
