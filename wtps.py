@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import datetime, timedelta
 import io
 import os
 from typing import List
@@ -140,8 +141,7 @@ class Collage:
 
     def _make_collage(self):
         images = [
-            (teaser, Image.open(teaser + ".logo.png"))
-            for pub, teaser in self.teasers
+            (teaser, Image.open(teaser + ".logo.png")) for pub, teaser in self.teasers
         ]
         packer.make_collage(images, self.fname)
         collage = Image.open(self.fname)
@@ -150,7 +150,7 @@ class Collage:
         # add white background
         collage.load()
         background = Image.new("RGB", collage.size, (255, 255, 255))
-        background.paste(collage, mask=collage.split()[3]) # 3 is the alpha channel
+        background.paste(collage, mask=collage.split()[3])  # 3 is the alpha channel
         background.save(self.fname)
 
 
@@ -169,14 +169,23 @@ class Twitter:
 
     def get_breaking_news(self):
         timeline = self.api.GetUserTimeline(screen_name="BBCBreaking")
-        latest = timeline[0].text
-        latest_url = latest.split(" ")[-1]
-        text = latest.replace(latest_url, "").strip()
-        breaking = Breaking(text, latest_url)
-        return [breaking]
+        return [self._to_breaking(t) for t in timeline if self._is_within(t, hours=1)]
 
     def post_teasers(self, text: str, teasers):
         self.api.PostUpdate(text, media=teasers)
+
+    @staticmethod
+    def _to_breaking(tweet):
+        text = tweet.text
+        url = text.split(" ")[-1]
+        text = text.replace(url, "").strip()
+        breaking = Breaking(text, url)
+        return breaking
+
+    @staticmethod
+    def _is_within(status, **kwargs):
+        status_dt = datetime.fromtimestamp(status.created_at_in_seconds)
+        return status_dt > datetime.now() - timedelta(**kwargs)
 
 
 def get_teasers(breaking: Breaking):

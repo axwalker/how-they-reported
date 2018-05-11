@@ -13,3 +13,16 @@ jobs:
           -e ACCESS_TOKEN
           -e ACCESS_TOKEN_SECRET
           wtps python wtps.py
+
+workflows:
+   version: 2
+   hourly:
+     triggers:
+       - schedule:
+           cron: "0 * * * *"
+           filters:
+             branches:
+               only:
+                 - master
+     jobs:
+       - build
