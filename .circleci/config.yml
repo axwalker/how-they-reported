@@ -1,0 +1,15 @@
+version: 2
+jobs:
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run: touch .env  # make empty env file so docker-compose doesn't complain
+      - run: docker-compose build
+      - run:
+          docker-compose run
+          -e CONSUMER_KEY
+          -e CONSUMER_SECRET
+          -e ACCESS_TOKEN
+          -e ACCESS_TOKEN_SECRET
+          wtps python wtps.py
